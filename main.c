@@ -1,0 +1,246 @@
+#include<stdio.h>
+#include<string.h>
+#include<stdlib.h>
+#include<unistd.h>
+#include <sys/wait.h>
+#include <time.h>
+#include <dirent.h>
+#include <errno.h>
+#include <fcntl.h>
+
+#define MAX_SIZE 1024
+char command[MAX_SIZE];
+pid_t background_pid;
+int  read_redirection = 0, write_redirection = 0, append_redirection = 0;
+char *read_file, *write_file, *append_file;
+
+
+void end_time(clock_t time_begin) {
+    clock_t time_end = clock();
+    double time_spent = (double) (time_end - time_begin) / CLOCKS_PER_SEC;
+    printf("Time taken to execute command = %f\n", time_spent);
+}
+
+void print_prompt(char cwd[]) {
+    getcwd(cwd, MAX_SIZE);
+    printf("(%s) MyShell> ", cwd);
+}
+
+void removeWS(char *str) {
+    //Remove leading whitespaces
+    unsigned long i = 0, start = 0, end = 0, lenght = strlen(str);
+
+    for (i = 0; i < lenght; i++) {
+        if (str[i] != '\t' && str[i] != ' ') {
+            start = i;
+            break;
+        }
+    }
+    for (i = 0; start < lenght && start != i; i++, start++) {
+        str[i] = str[start];
+        str[start] = ' ';
+    }
+
+    //Remove trailing whitespaces
+    for (i = 0; i < lenght; i++) {
+        if (str[i] != '\t' && str[i] != ' ') {
+            end = i;
+        }
+    }
+    str[++end] = '\0';
+}
+
+
+int execute(char *cmd, int bg) {
+    pid_t pid; // process ID
+    if (bg == 1)
+        cmd[strlen(cmd) - 1] = '\0';
+    switch (pid = fork()) {
+        case -1:
+            printf("fork error");
+        case 0: // execution in child process
+            pid = getpid(); // get child pid
+            if (bg == 1)
+                printf("[%d]\n", pid);
+            char *ptr = strtok(cmd, " ");
+            char *array[MAX_SIZE];
+            int i = 0;
+            while (ptr != NULL) {
+
+                array[i++] = ptr;
+                ptr = strtok(NULL, " ");
+            }
+            array[i] = NULL;
+            fflush(stdout);
+
+            if(read_redirection){
+                freopen(read_file, "r", stdin);
+            }
+            if(write_redirection){
+                freopen(write_file, "w", stdout);
+            }
+            if(append_redirection){
+                freopen(append_file,"a",stdout);
+            }
+            execvp(array[0], array);
+            printf("Child still alive");
+//            syserr("execl"); // error if return from exec
+        default:
+            if (bg == 0)
+                wait(NULL);
+            else if (bg == 1)
+                background_pid = pid;
+    }
+
+    return 0;
+}
+
+
+int main() {
+
+    //For child process
+    int status;
+    char cwd[MAX_SIZE];
+
+
+    while (1) {
+        //Prompt
+        if (background_pid && (waitpid(background_pid, &status, WNOHANG)) > 0) {
+            printf("Background process [%d] finished.\n", background_pid);
+            background_pid = 0;
+        }
+        print_prompt(cwd);
+        int bg_process = 0, fg_serial_processes = 0, fg_parallel_processes = 0;
+        //Accept command
+        fgets(command, MAX_SIZE, stdin);
+        command[strlen(command) - 1] = '\0';
+        time_t time_begin = clock();
+        removeWS(command);
+        if (!strlen(command))
+            continue;
+
+
+        //Analyse
+        char *cmdcpy = strdup(command);
+
+        char *ptr = strtok(cmdcpy, " ");
+
+        if (ptr && !strcmp(ptr, "quit")) {
+            exit(0);
+        } else if (ptr && !strcmp(ptr, "cd")) {
+            removeWS(ptr);
+//            printf("%s",ptr);
+            ptr = strtok(NULL, " ");
+            if (ptr == NULL) {
+                printf("BEFORE: %s\nAFTER: %s\n", cwd, cwd);
+            } else {
+                char *directory = ptr;
+                DIR *dir = opendir(directory);
+                if (dir) {
+                    printf("BEFORE:\nOLDPWD = %s\nPWD = %s\n", getenv("OLDPWD"), getenv("PWD"));
+                    setenv("OLDPWD", getenv("PWD"), 1);
+                    chdir(directory);
+                    getcwd(cwd, sizeof(cwd));
+                    setenv("PWD", cwd, 1);
+                    printf("AFTER:\nOLDPWD = %s\nPWD = %s\n", getenv("OLDPWD"), getenv("PWD"));
+                    closedir(dir);
+                } else if (ENOENT == errno) {
+                    /* Directory does not exist. */
+                    printf("ERROR: Directory does not exist\nBEFORE:\nPWD = %s\nAFTER:\nPWD = %s\n",
+                           getenv("PWD"), getenv("PWD"));
+
+                } else {
+                    /* opendir() failed for some other reason. */
+                    printf("Error");
+                }
+            }
+            end_time(time_begin);
+
+
+        } //End of cd command
+
+        else if (ptr && !strcmp(ptr, "dir")) {
+            ptr = strtok(NULL, " ");
+            char dir_command[MAX_SIZE] = "ls -al ";
+            if (ptr == NULL) {
+                system(dir_command);
+            } else {
+                strcat(dir_command, ptr);
+                system(dir_command);
+                end_time(time_begin);
+            }
+        } else if (ptr && !strcmp(ptr, "env")) {
+            setenv("COURSE", "CS_744", 0);
+            setenv("ASSIGNMENT", "ASSIGNMENT_1", 0);
+            printf("COURSE=%s\nASSIGNMENT=%s\nPWD=%s\n", getenv("COURSE"), getenv("ASSIGNMENT"), getenv("PWD"));
+            end_time(time_begin);
+        } else if (ptr && !strcmp(ptr, "clear")) {
+            write(1, "\33[1;1H\33[2J", 10);
+            end_time(time_begin);
+        } else {
+            while (ptr != NULL) {
+                if (!strcmp(ptr, "&"))
+                    bg_process = 1;
+                else if (!strcmp(ptr, "&&"))
+                    fg_serial_processes = 1;
+                else if (!strcmp(ptr, "&&&"))
+                    fg_parallel_processes = 1;
+                if (!strcmp(ptr, "<")) {
+                    read_redirection = 1;
+                    read_file = strtok(NULL, " ");
+                    removeWS(read_file);
+                }
+                if (!strcmp(ptr, ">")) {
+                    write_redirection = 1;
+                    write_file = strtok(NULL, " ");
+                    removeWS(write_file);
+                }
+                if (!strcmp(ptr, ">>")) {
+                    append_redirection = 1;
+                    append_file = strtok(NULL, " ");
+                    removeWS(append_file);
+                }
+                ptr = strtok(NULL, " ");
+            }
+
+            cmdcpy = strdup(command);
+            if (bg_process)
+                execute(cmdcpy, bg_process);
+            else if (fg_serial_processes) {
+                ptr = strtok(cmdcpy, "&&");
+                while (ptr != NULL) {
+                    removeWS(ptr);
+                    execute(ptr, bg_process);
+                    ptr = strtok(NULL, "&&");
+                }
+            } else if (fg_parallel_processes) {
+                ptr = strtok(cmdcpy, "&&&");
+                int count = 1;
+                while (ptr != NULL) {
+                    removeWS(ptr);
+                    execute(ptr, 2);
+                    count++;
+                    ptr = strtok(NULL, "&&&");
+                }
+                for (int i = 0; i < count; i++) {
+                    wait(NULL);
+                }
+
+            } else if(read_redirection || write_redirection || append_redirection)
+            {
+                cmdcpy = strdup(command);
+                int i=0;
+                while(cmdcpy[i]!='<' && cmdcpy[i]!='>')
+                {
+                    i++;
+                }
+                cmdcpy[i]='\0';
+                execute(cmdcpy,bg_process);
+            } else
+                execute(command,bg_process);
+
+        }
+
+
+    }
+}
