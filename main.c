@@ -11,14 +11,16 @@
 #define MAX_SIZE 1024
 char command[MAX_SIZE];
 pid_t background_pid;
-int  read_redirection = 0, write_redirection = 0, append_redirection = 0;
+int read_redirection = 0, write_redirection = 0, append_redirection = 0;
 char *read_file, *write_file, *append_file;
+extern char **environ;
+char cwd[MAX_SIZE];
 
 
 void end_time(clock_t time_begin) {
     clock_t time_end = clock();
     double time_spent = (double) (time_end - time_begin) / CLOCKS_PER_SEC;
-    printf("Time taken to execute command = %f\n", time_spent);
+    printf("Time taken to execute command = %f s\n", time_spent);
 }
 
 void print_prompt(char cwd[]) {
@@ -51,7 +53,7 @@ void removeWS(char *str) {
 }
 
 
-int execute(char *cmd, int bg) {
+void execute(char *cmd, int bg) {
     pid_t pid; // process ID
     if (bg == 1)
         cmd[strlen(cmd) - 1] = '\0';
@@ -60,8 +62,10 @@ int execute(char *cmd, int bg) {
             printf("fork error");
         case 0: // execution in child process
             pid = getpid(); // get child pid
-            if (bg == 1)
+            if (bg == 1) {
                 printf("[%d]\n", pid);
+                print_prompt(cwd);
+            }
             char *ptr = strtok(cmd, " ");
             char *array[MAX_SIZE];
             int i = 0;
@@ -73,42 +77,101 @@ int execute(char *cmd, int bg) {
             array[i] = NULL;
             fflush(stdout);
 
-            if(read_redirection){
+            if (read_redirection) {
                 freopen(read_file, "r", stdin);
             }
-            if(write_redirection){
+            if (write_redirection) {
                 freopen(write_file, "w", stdout);
             }
-            if(append_redirection){
-                freopen(append_file,"a",stdout);
+            if (append_redirection) {
+                freopen(append_file, "a", stdout);
             }
             execvp(array[0], array);
-            printf("Child still alive");
-//            syserr("execl"); // error if return from exec
+            if (!strcmp(array[0], "quit"))
+                exit(0);
+            else if (!strcmp(array[0], "cd")) {
+                exit(0);
+            } else if (!strcmp(array[0], "dir")) {
+                ptr = array[1];
+                char dir_command[MAX_SIZE] = "ls -al ";
+                if (ptr == NULL) {
+                    system(dir_command);
+                } else {
+                    strcat(dir_command, ptr);
+                    system(dir_command);
+//                    end_time(time_begin);
+                }
+                exit(0);
+            } else if (!strcmp(array[0], "env")) {
+                setenv("COURSE", "CS_744", 0);
+                setenv("ASSIGNMENT", "ASSIGNMENT_1", 0);
+                for (i = 0; environ[i] != NULL; i++) {
+                    printf("%s\n", environ[i]);
+                }
+                exit(0);
+            } else if (!strcmp(array[0], "clear")) {
+                write(1, "\33[1;1H\33[2J", 10);
+                exit(0);
+            }
+            printf("ERROR: Command does not exist\n");
+            exit(1);
         default:
+//            i = 0;
+//            char *pcmdcpy = strdup(cmd);
+//            char *pcmd = strdup(cmd);
+//            char *pptr = strtok(pcmd, " ");
+//            while (pptr != NULL) {
+//
+//                array[i++] = pptr;
+//                pptr = strtok(NULL, " ");
+//            }
+//            array[i] = NULL;
+//            pptr = strtok(pcmdcpy," ");
+//            if (pptr && !strcmp(pptr, "cd")) {
+//                removeWS(pptr);
+////            printf("%s",ptr);
+//                pptr = strtok(NULL, " ");
+//                if (pptr == NULL) {
+//                    printf("BEFORE: %s\nAFTER: %s\n", cwd, cwd);
+//                } else {
+//                    char *directory = pptr;
+//                    DIR *dir = opendir(directory);
+//                    if (dir) {
+//                        printf("BEFORE:\nOLDPWD = %s\nPWD = %s\n", getenv("OLDPWD"), getenv("PWD"));
+//                        setenv("OLDPWD", getenv("PWD"), 1);
+//                        chdir(directory);
+//                        getcwd(cwd, sizeof(cwd));
+//                        setenv("PWD", cwd, 1);
+//                        printf("AFTER:\nOLDPWD = %s\nPWD = %s\n", getenv("OLDPWD"), getenv("PWD"));
+//                        closedir(dir);
+//                    } else if (ENOENT == errno) {
+//                        /* Directory does not exist. */
+//                        printf("ERROR: Directory does not exist\nBEFORE:\nPWD = %s\nAFTER:\nPWD = %s\n",
+//                               getenv("PWD"), getenv("PWD"));
+//                    } else {
+//                        /* opendir() failed for some other reason. */
+//                        printf("Error");
+//                    }
+//                }
+//            }
             if (bg == 0)
                 wait(NULL);
             else if (bg == 1)
                 background_pid = pid;
     }
-
-    return 0;
 }
 
-
+//TODO: Free memory
 int main() {
+//    FILE *fp = NULL;
 
     //For child process
     int status;
-    char cwd[MAX_SIZE];
-
-
+    FILE *fp = NULL;
+//    while (fgets (command, 1024 , fp)!=NULL) {
+    //Prompt
     while (1) {
-        //Prompt
-        if (background_pid && (waitpid(background_pid, &status, WNOHANG)) > 0) {
-            printf("Background process [%d] finished.\n", background_pid);
-            background_pid = 0;
-        }
+        read_redirection = 0, write_redirection = 0, append_redirection = 0;
         print_prompt(cwd);
         int bg_process = 0, fg_serial_processes = 0, fg_parallel_processes = 0;
         //Accept command
@@ -116,9 +179,13 @@ int main() {
         command[strlen(command) - 1] = '\0';
         time_t time_begin = clock();
         removeWS(command);
+
+        if (background_pid && (waitpid(background_pid, &status, WNOHANG))) {
+            printf("MyShell: Background process [%d] finished\n", background_pid);
+            background_pid = 0;
+        }
         if (!strlen(command))
             continue;
-
 
         //Analyse
         char *cmdcpy = strdup(command);
@@ -131,13 +198,16 @@ int main() {
             removeWS(ptr);
 //            printf("%s",ptr);
             ptr = strtok(NULL, " ");
-            if (ptr == NULL) {
+            if (ptr == NULL || !strcmp(ptr, "&&") || !strcmp(ptr, "&&&")) {
                 printf("BEFORE: %s\nAFTER: %s\n", cwd, cwd);
             } else {
                 char *directory = ptr;
                 DIR *dir = opendir(directory);
                 if (dir) {
-                    printf("BEFORE:\nOLDPWD = %s\nPWD = %s\n", getenv("OLDPWD"), getenv("PWD"));
+                    char *oldpwd = getenv("OLDPWD");
+                    if (!oldpwd)
+                        oldpwd = "Empty";
+                    printf("BEFORE:\nOLDPWD = %s\nPWD = %s\n", oldpwd, getenv("PWD"));
                     setenv("OLDPWD", getenv("PWD"), 1);
                     chdir(directory);
                     getcwd(cwd, sizeof(cwd));
@@ -146,19 +216,14 @@ int main() {
                     closedir(dir);
                 } else if (ENOENT == errno) {
                     /* Directory does not exist. */
-                    printf("ERROR: Directory does not exist\nBEFORE:\nPWD = %s\nAFTER:\nPWD = %s\n",
-                           getenv("PWD"), getenv("PWD"));
-
+                    printf("ERROR: Directory does not exist");
                 } else {
                     /* opendir() failed for some other reason. */
                     printf("Error");
                 }
             }
             end_time(time_begin);
-
-
         } //End of cd command
-
         else if (ptr && !strcmp(ptr, "dir")) {
             ptr = strtok(NULL, " ");
             char dir_command[MAX_SIZE] = "ls -al ";
@@ -172,7 +237,10 @@ int main() {
         } else if (ptr && !strcmp(ptr, "env")) {
             setenv("COURSE", "CS_744", 0);
             setenv("ASSIGNMENT", "ASSIGNMENT_1", 0);
-            printf("COURSE=%s\nASSIGNMENT=%s\nPWD=%s\n", getenv("COURSE"), getenv("ASSIGNMENT"), getenv("PWD"));
+            for (int i = 0; environ[i] != NULL; i++) {
+                printf("%s\n", environ[i]);
+            }
+//            printf("COURSE=%s\nASSIGNMENT=%s\nPWD=%s\n", getenv("COURSE"), getenv("ASSIGNMENT"), getenv("PWD"));
             end_time(time_begin);
         } else if (ptr && !strcmp(ptr, "clear")) {
             write(1, "\33[1;1H\33[2J", 10);
@@ -202,7 +270,6 @@ int main() {
                 }
                 ptr = strtok(NULL, " ");
             }
-
             cmdcpy = strdup(command);
             if (bg_process)
                 execute(cmdcpy, bg_process);
@@ -226,21 +293,17 @@ int main() {
                     wait(NULL);
                 }
 
-            } else if(read_redirection || write_redirection || append_redirection)
-            {
+            } else if (read_redirection || write_redirection || append_redirection) {
                 cmdcpy = strdup(command);
-                int i=0;
-                while(cmdcpy[i]!='<' && cmdcpy[i]!='>')
-                {
+                int i = 0;
+                while (cmdcpy[i] != '<' && cmdcpy[i] != '>') {
                     i++;
                 }
-                cmdcpy[i]='\0';
-                execute(cmdcpy,bg_process);
+                cmdcpy[i] = '\0';
+                execute(cmdcpy, bg_process);
             } else
-                execute(command,bg_process);
-
+                execute(command, bg_process);
         }
-
 
     }
 }
