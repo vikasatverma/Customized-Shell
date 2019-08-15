@@ -64,13 +64,16 @@ void execute(char *cmd, int bg) {
             pid = getpid(); // get child pid
             if (bg == 1) {
                 printf("[%d]\n", pid);
-                print_prompt(cwd);
+//                print_prompt(cwd);
             }
             char *ptr = strtok(cmd, " ");
             char *array[MAX_SIZE];
             int i = 0;
             while (ptr != NULL) {
+                if(!strcmp(ptr,"<") || !strcmp(ptr,">")){
 
+                    break;
+                }
                 array[i++] = ptr;
                 ptr = strtok(NULL, " ");
             }
@@ -109,51 +112,44 @@ void execute(char *cmd, int bg) {
                     printf("%s\n", environ[i]);
                 }
                 exit(0);
-            } else if (!strcmp(array[0], "clear")) {
+            } else if (!strcmp(array[0], "clr")) {
                 write(1, "\33[1;1H\33[2J", 10);
                 exit(0);
             }
             printf("ERROR: Command does not exist\n");
             exit(1);
         default:
-//            i = 0;
-//            char *pcmdcpy = strdup(cmd);
-//            char *pcmd = strdup(cmd);
-//            char *pptr = strtok(pcmd, " ");
-//            while (pptr != NULL) {
-//
-//                array[i++] = pptr;
-//                pptr = strtok(NULL, " ");
-//            }
-//            array[i] = NULL;
-//            pptr = strtok(pcmdcpy," ");
-//            if (pptr && !strcmp(pptr, "cd")) {
-//                removeWS(pptr);
-////            printf("%s",ptr);
-//                pptr = strtok(NULL, " ");
-//                if (pptr == NULL) {
-//                    printf("BEFORE: %s\nAFTER: %s\n", cwd, cwd);
-//                } else {
-//                    char *directory = pptr;
-//                    DIR *dir = opendir(directory);
-//                    if (dir) {
-//                        printf("BEFORE:\nOLDPWD = %s\nPWD = %s\n", getenv("OLDPWD"), getenv("PWD"));
-//                        setenv("OLDPWD", getenv("PWD"), 1);
-//                        chdir(directory);
-//                        getcwd(cwd, sizeof(cwd));
-//                        setenv("PWD", cwd, 1);
-//                        printf("AFTER:\nOLDPWD = %s\nPWD = %s\n", getenv("OLDPWD"), getenv("PWD"));
-//                        closedir(dir);
-//                    } else if (ENOENT == errno) {
-//                        /* Directory does not exist. */
-//                        printf("ERROR: Directory does not exist\nBEFORE:\nPWD = %s\nAFTER:\nPWD = %s\n",
-//                               getenv("PWD"), getenv("PWD"));
-//                    } else {
-//                        /* opendir() failed for some other reason. */
-//                        printf("Error");
-//                    }
-//                }
-//            }
+            removeWS(cmd);
+            char *parentcommand = strdup(cmd);
+            char *token = strtok_r(parentcommand," ",&parentcommand);
+            if (token!=NULL && !strcmp(token,"cd")){
+                char *newdir = strtok_r(NULL," ",&parentcommand);
+                if (newdir == NULL) {
+                    printf("BEFORE: %s\nAFTER: %s\n", cwd, cwd);
+                } else {
+                    char *directory = newdir;
+                    DIR *dir = opendir(directory);
+                    if (dir) {
+                        char *oldpwd = getenv("OLDPWD");
+                        if (!oldpwd)
+                            oldpwd = "Empty";
+                        printf("BEFORE:\nOLDPWD = %s\nPWD = %s\n", oldpwd, getenv("PWD"));
+                        setenv("OLDPWD", getenv("PWD"), 1);
+                        chdir(directory);
+                        getcwd(cwd, sizeof(cwd));
+                        setenv("PWD", cwd, 1);
+                        printf("AFTER:\nOLDPWD = %s\nPWD = %s\n", getenv("OLDPWD"), getenv("PWD"));
+                        closedir(dir);
+                    } else if (ENOENT == errno) {
+                        /* Directory does not exist. */
+                        printf("ERROR: Directory does not exist");
+                    } else {
+                        /* opendir() failed for some other reason. */
+                        printf("Error");
+                    }
+                }
+
+            }
             if (bg == 0)
                 wait(NULL);
             else if (bg == 1)
@@ -242,7 +238,7 @@ int main() {
             }
 //            printf("COURSE=%s\nASSIGNMENT=%s\nPWD=%s\n", getenv("COURSE"), getenv("ASSIGNMENT"), getenv("PWD"));
             end_time(time_begin);
-        } else if (ptr && !strcmp(ptr, "clear")) {
+        } else if (ptr && !strcmp(ptr, "clr")) {
             write(1, "\33[1;1H\33[2J", 10);
             end_time(time_begin);
         } else {
@@ -253,39 +249,82 @@ int main() {
                     fg_serial_processes = 1;
                 else if (!strcmp(ptr, "&&&"))
                     fg_parallel_processes = 1;
-                if (!strcmp(ptr, "<")) {
-                    read_redirection = 1;
-                    read_file = strtok(NULL, " ");
-                    removeWS(read_file);
-                }
-                if (!strcmp(ptr, ">")) {
-                    write_redirection = 1;
-                    write_file = strtok(NULL, " ");
-                    removeWS(write_file);
-                }
-                if (!strcmp(ptr, ">>")) {
-                    append_redirection = 1;
-                    append_file = strtok(NULL, " ");
-                    removeWS(append_file);
-                }
+
                 ptr = strtok(NULL, " ");
             }
             cmdcpy = strdup(command);
             if (bg_process)
                 execute(cmdcpy, bg_process);
             else if (fg_serial_processes) {
-                ptr = strtok(cmdcpy, "&&");
-                while (ptr != NULL) {
+                ptr = strtok_r(cmdcpy, "&&",&cmdcpy);
+
+
+                while (ptr!= NULL) {
+
+                    char *cmd = strdup(ptr);
+                    char *word = strtok_r(cmd," ",&cmd);
+                    while (word!=NULL) {
+                        if (!strcmp(word, "<")) {
+                            read_redirection = 1;
+                            read_file = strtok_r(NULL, " ", &cmd);
+                            removeWS(read_file);
+                        }
+                        if (!strcmp(word, ">")) {
+                            write_redirection = 1;
+                            write_file = strtok_r(NULL, " ", &cmd);
+                            removeWS(write_file);
+                        }
+                        if (!strcmp(word, ">>")) {
+                            append_redirection = 1;
+                            append_file = strtok_r(NULL, " ", &cmd);
+                            removeWS(append_file);
+                        }
+                        word = strtok_r(NULL," ",&cmd);
+                    }
+//                    unsigned long i=0;
+//                    for(i=0;i<strlen(ptr);i++)
+//                    {
+//                        if(ptr[i]=='<' || ptr[i]=='>')
+//                            {ptr[i]='\0';
+//                                break;
+//                            }
+//                    }
                     removeWS(ptr);
                     execute(ptr, bg_process);
-                    ptr = strtok(NULL, "&&");
+                    read_redirection = 0;
+                    write_redirection = 0;
+                    append_redirection =0 ;
+                    ptr = strtok_r(NULL, "&&",&cmdcpy);
                 }
             } else if (fg_parallel_processes) {
                 ptr = strtok(cmdcpy, "&&&");
                 int count = 1;
                 while (ptr != NULL) {
+                    char *cmd = strdup(ptr);
+                    char *word = strtok_r(cmd," ",&cmd);
+                    while (word!=NULL) {
+                        if (!strcmp(word, "<")) {
+                            read_redirection = 1;
+                            read_file = strtok_r(NULL, " ", &cmd);
+                            removeWS(read_file);
+                        }
+                        if (!strcmp(word, ">")) {
+                            write_redirection = 1;
+                            write_file = strtok_r(NULL, " ", &cmd);
+                            removeWS(write_file);
+                        }
+                        if (!strcmp(word, ">>")) {
+                            append_redirection = 1;
+                            append_file = strtok_r(NULL, " ", &cmd);
+                            removeWS(append_file);
+                        }
+                        word = strtok_r(NULL," ",&cmd);
+                    }
                     removeWS(ptr);
                     execute(ptr, 2);
+                    read_redirection = 0;
+                    write_redirection = 0;
+                    append_redirection =0 ;
                     count++;
                     ptr = strtok(NULL, "&&&");
                 }
