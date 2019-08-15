@@ -12,11 +12,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="f100adf3-914c-441b-bbf0-262b084a4a81" name="Default Changelist" comment="removes previously stored redirections.">
-      <change afterPath="$PROJECT_DIR$/cmake-build-debug/vikas" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/a.out" beforeDir="false" afterPath="$PROJECT_DIR$/a.out" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Final_Shell.dir/main.c.o" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Final_Shell.dir/main.c.o" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/Final_Shell" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/Final_Shell" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/command" beforeDir="false" afterPath="$PROJECT_DIR$/command" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.c" beforeDir="false" afterPath="$PROJECT_DIR$/main.c" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -58,7 +58,7 @@
     </option>
   </component>
   <component name="RunManager">
-    <configuration name="Final_Shell" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Final_Shell" TARGET_NAME="Final_Shell" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Final_Shell" RUN_TARGET_NAME="Final_Shell">
+    <configuration name="Final_Shell" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="command" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Final_Shell" TARGET_NAME="Final_Shell" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Final_Shell" RUN_TARGET_NAME="Final_Shell">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -97,30 +97,11 @@
     <option name="LAST_COMMIT_MESSAGE" value="removes previously stored redirections." />
   </component>
   <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/main.c</url>
-          <line>56</line>
-          <option name="timeStamp" value="13" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/main.c</url>
-          <line>342</line>
-          <option name="timeStamp" value="14" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/main.c</url>
-          <line>257</line>
-          <option name="timeStamp" value="24" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
     <watches-manager>
       <configuration name="CMakeRunConfiguration">
-        <watch expression="ptr" />
+        <watch expression="command" language="ObjectiveC" />
         <watch expression="cmd" />
-        <watch expression="word" />
+        <watch expression="fp-&gt;_IO_read_ptr" />
       </configuration>
     </watches-manager>
   </component>

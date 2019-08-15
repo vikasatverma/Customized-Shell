@@ -1,1 +1,3 @@
-cd ..
+ls && cd ..
+pwd
+ls
