@@ -14,7 +14,9 @@
     <list default="true" id="f100adf3-914c-441b-bbf0-262b084a4a81" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/a.out" beforeDir="false" afterPath="$PROJECT_DIR$/a.out" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/c" beforeDir="false" afterPath="$PROJECT_DIR$/c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Final_Shell.dir/main.c.o" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Final_Shell.dir/main.c.o" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/Final_Shell" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/Final_Shell" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/command" beforeDir="false" afterPath="$PROJECT_DIR$/command" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.c" beforeDir="false" afterPath="$PROJECT_DIR$/main.c" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -73,6 +75,7 @@
       <option name="presentableId" value="Default" />
       <updated>1565610949113</updated>
       <workItem from="1565610950434" duration="30226000" />
+      <workItem from="1565933823656" duration="2474000" />
     </task>
     <task id="LOCAL-00001" summary="Best possible with input file.">
       <created>1565896506679</created>
@@ -99,7 +102,9 @@
       <map>
         <entry key="MAIN">
           <value>
-            <State />
+            <State>
+              <option name="COLUMN_ORDER" />
+            </State>
           </value>
         </entry>
       </map>
@@ -111,10 +116,20 @@
     <option name="LAST_COMMIT_MESSAGE" value="Best possible with input file." />
   </component>
   <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/main.c</url>
+          <line>178</line>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
     <watches-manager>
       <configuration name="CMakeRunConfiguration">
         <watch expression="command" language="ObjectiveC" />
         <watch expression="cmd" />
+        <watch expression="fp-&gt;_IO_read_ptr" />
         <watch expression="fp-&gt;_IO_read_ptr" />
       </configuration>
     </watches-manager>

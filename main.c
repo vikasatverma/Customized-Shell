@@ -15,7 +15,7 @@ int read_redirection = 0, write_redirection = 0, append_redirection = 0;
 char *read_file, *write_file, *append_file;
 extern char **environ;
 char cwd[MAX_SIZE];
-int killparent;
+//int killparent;
 
 
 void end_time(clock_t time_begin) {
@@ -174,7 +174,7 @@ int main(int argc, char **argv) {
 //    while (fgets (command, 1024 , fp)!=NULL) {
     //Prompt
     char buf[50000];
-    while (fgets(buf, MAX_SIZE, fp) != NULL) {
+    while (fgets(buf, 2048, fp) != NULL) {
         command = strdup(buf);
         read_redirection = 0, write_redirection = 0, append_redirection = 0;
         int bg_process = 0, fg_serial_processes = 0, fg_parallel_processes = 0;
