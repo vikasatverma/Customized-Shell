@@ -114,7 +114,8 @@ void execute(char *cmd, int bg) {
                     printf("%s\n", environ[i]);
                 }
                 exit(0);
-            } if (!strcmp(array[0], "clr")) {
+            }
+            if (!strcmp(array[0], "clr")) {
                 write(1, "\33[1;1H\33[2J", 10);
                 exit(0);
             }
@@ -155,7 +156,7 @@ void execute(char *cmd, int bg) {
             if (bg == 0)
                 wait(NULL);
             else if (bg == 1)
-                array_of_background_processes[count_of_background_processes++]=pid;
+                array_of_background_processes[count_of_background_processes++] = pid;
     }
 }
 
@@ -185,12 +186,11 @@ int main(int argc, char **argv) {
         time_t time_begin = clock();
         removeWS(command);
 
-        for(int ct=0; ct<=count_of_background_processes;ct++)
-        {
+        for (int ct = 0; ct <= count_of_background_processes; ct++) {
             if (array_of_background_processes[ct] && (waitpid(array_of_background_processes[ct], &status, WNOHANG))) {
-            printf("MyShell: Background process [%d] finished\n", array_of_background_processes[ct]);
+                printf("MyShell: Background process [%d] finished\n", array_of_background_processes[ct]);
                 array_of_background_processes[ct] = 0;
-        }
+            }
         }
         if (!strlen(command))
             continue;
@@ -265,9 +265,11 @@ int main(int argc, char **argv) {
                 ptr = strtok(NULL, " ");
             }
             cmdcpy = strdup(command);
-            if (bg_process)
-                execute(cmdcpy, bg_process);
-            else if (fg_serial_processes) {
+            if (bg_process) {
+                removeWS(cmdcpy);
+                if (strcmp(cmdcpy, "&") != 0)
+                    execute(cmdcpy, bg_process);
+            } else if (fg_serial_processes) {
                 ptr = strtok_r(cmdcpy, "&&", &cmdcpy);
 
 
@@ -333,7 +335,8 @@ int main(int argc, char **argv) {
                         word = strtok_r(NULL, " ", &cmd);
                     }
                     removeWS(ptr);
-                    execute(ptr, 2);
+                    if (strcmp(ptr, "") != 0)
+                        execute(ptr, 2);
                     read_redirection = 0;
                     write_redirection = 0;
                     append_redirection = 0;

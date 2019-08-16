@@ -1,4 +1,3 @@
-cat CMakeLists.txt &
 &
 &&
 &&&
