@@ -11,12 +11,9 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="f100adf3-914c-441b-bbf0-262b084a4a81" name="Default Changelist" comment="">
+    <list default="true" id="f100adf3-914c-441b-bbf0-262b084a4a81" name="Default Changelist" comment="TODO: cd as a part of &amp;&amp; and &amp;&amp;&amp;">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/a.out" beforeDir="false" afterPath="$PROJECT_DIR$/a.out" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Final_Shell.dir/main.c.o" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/Final_Shell.dir/main.c.o" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/Final_Shell" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/Final_Shell" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/command" beforeDir="false" afterPath="$PROJECT_DIR$/command" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.c" beforeDir="false" afterPath="$PROJECT_DIR$/main.c" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -34,6 +31,11 @@
       <list>
         <option value="vikas" />
       </list>
+    </option>
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="f2fa90c692b66696a88bc8ca2dd7952522f367e3" />
+      </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
@@ -58,7 +60,7 @@
     </option>
   </component>
   <component name="RunManager">
-    <configuration name="Final_Shell" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="command" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Final_Shell" TARGET_NAME="Final_Shell" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Final_Shell" RUN_TARGET_NAME="Final_Shell">
+    <configuration name="Final_Shell" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="cdcommand" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Final_Shell" TARGET_NAME="Final_Shell" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Final_Shell" RUN_TARGET_NAME="Final_Shell">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -113,14 +115,15 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="removes previously stored redirections." />
     <MESSAGE value="Best possible with input file." />
-    <option name="LAST_COMMIT_MESSAGE" value="Best possible with input file." />
+    <MESSAGE value="TODO: cd as a part of &amp;&amp; and &amp;&amp;&amp;" />
+    <option name="LAST_COMMIT_MESSAGE" value="TODO: cd as a part of &amp;&amp; and &amp;&amp;&amp;" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/main.c</url>
-          <line>178</line>
+          <line>184</line>
           <option name="timeStamp" value="2" />
         </line-breakpoint>
       </breakpoints>

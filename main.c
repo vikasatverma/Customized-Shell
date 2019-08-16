@@ -155,9 +155,9 @@ void execute(char *cmd, int bg) {
 
             }
             if (bg == 0)
-                {int status;
+            {int status;
                 waitpid(pid,&status,0);
-                }
+            }
             else if (bg == 1)
                 array_of_background_processes[count_of_background_processes++] = pid;
     }
