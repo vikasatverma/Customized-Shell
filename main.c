@@ -58,6 +58,7 @@ void execute(char *cmd, int bg) {
     pid_t pid; // process ID
     if (bg == 1)
         cmd[strlen(cmd) - 1] = '\0';
+    printf("****%s****\n", cmd);
     switch (pid = fork()) {
         case -1:
             printf("fork error");
@@ -154,7 +155,9 @@ void execute(char *cmd, int bg) {
 
             }
             if (bg == 0)
-                wait(NULL);
+                {int status;
+                waitpid(pid,&status,0);
+                }
             else if (bg == 1)
                 array_of_background_processes[count_of_background_processes++] = pid;
     }
@@ -169,12 +172,15 @@ int main(int argc, char **argv) {
     int status;
     if (argc != 2) {
         printf("Syntax: ./<executable> <in_file>");
+        exit(0);
     }
     FILE *fp = fopen(argv[1], "r");
 //    while (fgets (command, 1024 , fp)!=NULL) {
     //Prompt
     char buf[50000];
+    memset(buf, 0, 50000);
     while (fgets(buf, 2048, fp) != NULL) {
+//        sleep(1);
         command = strdup(buf);
         read_redirection = 0, write_redirection = 0, append_redirection = 0;
         int bg_process = 0, fg_serial_processes = 0, fg_parallel_processes = 0;
@@ -185,6 +191,11 @@ int main(int argc, char **argv) {
             command[strlen(command) - 1] = '\0';
         time_t time_begin = clock();
         removeWS(command);
+        int dont_run_here=0;
+        for(unsigned long ctr=0;ctr<strlen(command);ctr++){
+            if(command[ctr]=='<' || command[ctr]=='>' || command[ctr]=='&' )
+                dont_run_here=1;
+        }
 
         for (int ct = 0; ct <= count_of_background_processes; ct++) {
             if (array_of_background_processes[ct] && (waitpid(array_of_background_processes[ct], &status, WNOHANG))) {
@@ -200,9 +211,9 @@ int main(int argc, char **argv) {
 
         char *ptr = strtok(cmdcpy, " ");
 
-        if (ptr && !strcmp(ptr, "quit")) {
+        if (!dont_run_here && ptr && !strcmp(ptr, "quit")) {
             exit(0);
-        } else if (ptr && !strcmp(ptr, "cd")) {
+        } else if (!dont_run_here && ptr && !strcmp(ptr, "cd")) {
             removeWS(ptr);
 //            printf("%s",ptr);
             ptr = strtok(NULL, " ");
@@ -232,7 +243,7 @@ int main(int argc, char **argv) {
             }
             end_time(time_begin);
         } //End of cd command
-        else if (ptr && !strcmp(ptr, "dir")) {
+        else if (!dont_run_here && ptr && !strcmp(ptr, "dir")) {
             ptr = strtok(NULL, " ");
             char dir_command[MAX_SIZE] = "ls -al ";
             if (ptr == NULL) {
@@ -242,7 +253,7 @@ int main(int argc, char **argv) {
                 system(dir_command);
                 end_time(time_begin);
             }
-        } else if (ptr && !strcmp(ptr, "env")) {
+        } else if (!dont_run_here && ptr && !strcmp(ptr, "env")) {
             setenv("COURSE", "CS_744", 0);
             setenv("ASSIGNMENT", "ASSIGNMENT_1", 0);
             for (int i = 0; environ[i] != NULL; i++) {
@@ -250,7 +261,7 @@ int main(int argc, char **argv) {
             }
 //            printf("COURSE=%s\nASSIGNMENT=%s\nPWD=%s\n", getenv("COURSE"), getenv("ASSIGNMENT"), getenv("PWD"));
             end_time(time_begin);
-        } else if (ptr && !strcmp(ptr, "clr")) {
+        } else if (!dont_run_here && ptr && !strcmp(ptr, "clr")) {
             write(1, "\33[1;1H\33[2J", 10);
             end_time(time_begin);
         } else {
@@ -358,6 +369,6 @@ int main(int argc, char **argv) {
             } else
                 execute(command, bg_process);
         }
-
+        memset(buf, 0, 50000);
     }
 }
