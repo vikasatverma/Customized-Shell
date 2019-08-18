@@ -1,0 +1,18 @@
+To build the program, run:
+
+$ make
+
+
+Run the program using:
+
+$ make run
+
+
+To clean ie remove "a.out" file, run the command:
+
+$ make clean
+
+
+NOTE:
+
+This C program doesn't expect and accept commands from a file. I tried to make it compatible with it but due to limited time and avoid losing marks, I had to submit it as a run time command input program. Sorry :(

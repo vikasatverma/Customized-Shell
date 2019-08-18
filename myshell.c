@@ -9,13 +9,13 @@
 #include <fcntl.h>
 
 #define MAX_SIZE 1024
-char *command;
 int array_of_background_processes[MAX_SIZE], count_of_background_processes;
 int read_redirection = 0, write_redirection = 0, append_redirection = 0;
 char *read_file, *write_file, *append_file;
 extern char **environ;
 char cwd[MAX_SIZE];
 //int killparent;
+int dont_run_here;
 
 
 void end_time(clock_t time_begin) {
@@ -58,7 +58,7 @@ void execute(char *cmd, int bg) {
     pid_t pid; // process ID
     if (bg == 1)
         cmd[strlen(cmd) - 1] = '\0';
-    printf("****%s****\n", cmd);
+//    printf("****%s****\n", cmd);
     switch (pid = fork()) {
         case -1:
             printf("fork error");
@@ -91,6 +91,7 @@ void execute(char *cmd, int bg) {
             if (append_redirection) {
                 freopen(append_file, "a", stdout);
             }
+
             execvp(array[0], array);
             if (!strcmp(array[0], "quit"))
                 exit(0);
@@ -124,9 +125,11 @@ void execute(char *cmd, int bg) {
             exit(0);
         default:
             removeWS(cmd);
+            int ran_cd = 0;
             char *parentcommand = strdup(cmd);
             char *token = strtok_r(parentcommand, " ", &parentcommand);
             if (token != NULL && !strcmp(token, "cd")) {
+                ran_cd = 1;
                 char *newdir = strtok_r(NULL, " ", &parentcommand);
                 if (newdir == NULL) {
                     printf("BEFORE: %s\nAFTER: %s\n", cwd, cwd);
@@ -154,47 +157,49 @@ void execute(char *cmd, int bg) {
                 }
 
             }
-            if (bg == 0)
-            {int status;
-                waitpid(pid,&status,0);
-            }
-            else if (bg == 1)
+            if (bg == 0) {
+                int status;
+                if (!ran_cd)
+                    waitpid(pid, &status, 0);
+            } else if (bg == 1)
                 array_of_background_processes[count_of_background_processes++] = pid;
     }
 }
 
 //TODO: Free memory
 int main(int argc, char **argv) {
-//    FILE *fp = NULL;
-    int papentpid = getpid();
+    char *command;
 
     //For child process
     int status;
-    if (argc != 2) {
-        printf("Syntax: ./<executable> <in_file>");
-        exit(0);
-    }
-    FILE *fp = fopen(argv[1], "r");
-//    while (fgets (command, 1024 , fp)!=NULL) {
-    //Prompt
+
     char buf[50000];
     memset(buf, 0, 50000);
-    while (fgets(buf, 2048, fp) != NULL) {
+    while (1) {
+        if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
+            perror(0);
+            exit(1);
+        }
+        print_prompt(cwd);
+        fgets(buf, sizeof(buf), stdin);
 //        sleep(1);
         command = strdup(buf);
         read_redirection = 0, write_redirection = 0, append_redirection = 0;
         int bg_process = 0, fg_serial_processes = 0, fg_parallel_processes = 0;
 
         getcwd(cwd, MAX_SIZE);
-        printf("(%s) MyShell> %s", cwd, command);
+
         if (command[strlen(command) - 1] == '\n')
             command[strlen(command) - 1] = '\0';
+
         time_t time_begin = clock();
         removeWS(command);
-        int dont_run_here=0;
-        for(unsigned long ctr=0;ctr<strlen(command);ctr++){
-            if(command[ctr]=='<' || command[ctr]=='>' || command[ctr]=='&' )
-                dont_run_here=1;
+        dont_run_here = 0;
+        for (unsigned long ctr = 0; ctr < strlen(command); ctr++) {
+            if (command[ctr] == '<' || command[ctr] == '>' || command[ctr] == '&') {
+                dont_run_here = 1;
+                break;
+            }
         }
 
         for (int ct = 0; ct <= count_of_background_processes; ct++) {
@@ -215,7 +220,6 @@ int main(int argc, char **argv) {
             exit(0);
         } else if (!dont_run_here && ptr && !strcmp(ptr, "cd")) {
             removeWS(ptr);
-//            printf("%s",ptr);
             ptr = strtok(NULL, " ");
             if (ptr == NULL || !strcmp(ptr, "&&") || !strcmp(ptr, "&&&")) {
                 printf("BEFORE: %s\nAFTER: %s\n", cwd, cwd);
@@ -276,8 +280,30 @@ int main(int argc, char **argv) {
                 ptr = strtok(NULL, " ");
             }
             cmdcpy = strdup(command);
+            removeWS(command);
             if (bg_process) {
-                removeWS(cmdcpy);
+                char *cmdcpy = strdup(command);
+                char *word = strtok_r(command, " ", &command);
+                while (word != NULL) {
+                    if (!strcmp(word, "<")) {
+                        read_redirection = 1;
+                        read_file = strtok_r(NULL, " ", &command);
+                        removeWS(read_file);
+                    }
+                    if (!strcmp(word, ">")) {
+                        write_redirection = 1;
+                        write_file = strtok_r(NULL, " ", &command);
+                        removeWS(write_file);
+                    }
+                    if (!strcmp(word, ">>")) {
+                        append_redirection = 1;
+                        append_file = strtok_r(NULL, " ", &command);
+                        removeWS(append_file);
+                    }
+                    word = strtok_r(NULL, " ", &command);
+                }
+
+
                 if (strcmp(cmdcpy, "&") != 0)
                     execute(cmdcpy, bg_process);
             } else if (fg_serial_processes) {
@@ -306,14 +332,7 @@ int main(int argc, char **argv) {
                         }
                         word = strtok_r(NULL, " ", &cmd);
                     }
-//                    unsigned long i=0;
-//                    for(i=0;i<strlen(ptr);i++)
-//                    {
-//                        if(ptr[i]=='<' || ptr[i]=='>')
-//                            {ptr[i]='\0';
-//                                break;
-//                            }
-//                    }
+
                     removeWS(ptr);
                     execute(ptr, bg_process);
                     read_redirection = 0;
@@ -366,8 +385,36 @@ int main(int argc, char **argv) {
                 }
                 cmdcpy[i] = '\0';
                 execute(cmdcpy, bg_process);
-            } else
-                execute(command, bg_process);
+            } else {
+                char *cmdcpy = strdup(command);
+                char *word = strtok_r(command, " ", &command);
+                while (word != NULL) {
+                    if (!strcmp(word, "<")) {
+                        read_redirection = 1;
+                        read_file = strtok_r(NULL, " ", &command);
+                        removeWS(read_file);
+                    }
+                    if (!strcmp(word, ">")) {
+                        write_redirection = 1;
+                        write_file = strtok_r(NULL, " ", &command);
+                        removeWS(write_file);
+                    }
+                    if (!strcmp(word, ">>")) {
+                        append_redirection = 1;
+                        append_file = strtok_r(NULL, " ", &command);
+                        removeWS(append_file);
+                    }
+                    word = strtok_r(NULL, " ", &command);
+                }
+                for(unsigned long i =0; i< strlen(cmdcpy);i++){
+                    if(cmdcpy[i]=='<' || cmdcpy[i]=='>')
+                    {
+                        cmdcpy[i]='\0';
+                        break;
+                    }
+                }
+                execute(cmdcpy, bg_process);
+            }
         }
         memset(buf, 0, 50000);
     }
