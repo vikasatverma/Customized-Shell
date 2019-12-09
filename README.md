@@ -1,15 +1,18 @@
 To build the program, run:
+--------
 
-$ make
+      make
 
 
 Run the program using:
+---------
 
-$ make run
+      make run
 
 
 To clean ie remove "a.out" file, run the command:
+----------
 
-$ make clean
+       make clean
 
 
